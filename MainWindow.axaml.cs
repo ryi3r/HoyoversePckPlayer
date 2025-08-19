@@ -583,10 +583,9 @@ public partial class MainWindow : Window
                     }
                     break;
                 case LoopMode.LoopOne:
+                    isOk = false;
                     if (ChannelHandle != null)
                         Bass.ChannelSetPosition((int)ChannelHandle, 0);
-                    else
-                        isOk = false;
                     break;
                 case LoopMode.LoopPack:
                     {
