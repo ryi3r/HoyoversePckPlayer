@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+           mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+           x:Class="HoyoversePckPlayer.MainWindow"
+           Title="HoyoversePckPlayer">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Data">
+                <MenuItem Header="Load Folder" Click="LoadFolder_OnClick"/>
+                <MenuItem Header="Load File" Click="LoadFile_OnClick"/>
+                <Separator/>
+                <MenuItem Header="Clear Data" Click="ClearData_OnClick"/>
+            </MenuItem>
+            <MenuItem Click="ExportAll_OnClick" Header="Export All"/>
+        </Menu>
+        <Grid ColumnDefinitions="300, 4, *">
+            <TreeView Name="SongTree" SelectionChanged="SongTree_OnSelectionChanged"/>
+            <GridSplitter Grid.Column="1"/>
+            <DockPanel Grid.Column="2">
+                <StackPanel DockPanel.Dock="Top" Orientation="Vertical" Margin="10">
+                    <TextBlock HorizontalAlignment="Center" Name="SongName">Sample Song</TextBlock>
+                    <Grid ColumnDefinitions="1*, 10*, 1*">
+                        <TextBlock Grid.Column="0" Margin="0 16 0 0" HorizontalAlignment="Center" Name="SongCurrentDuration">--:--</TextBlock>
+                        <Slider Grid.Column="1" Margin="12 0" Name="SongSlider" ValueChanged="SongSlider_OnValueChanged" Minimum="0" Maximum="1"/>
+                        <TextBlock Grid.Column="2" Margin="0 16 0 0" HorizontalAlignment="Center" Name="SongTotalDuration">--:--</TextBlock>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
+                        <Button Name="PlayButton" Click="PlayButton_OnClick">Play</Button>
+                        <Button Click="PauseButton_OnClick" Name="PauseButton">Pause</Button>
+                        <Button Click="Last_OnClick">Last</Button>
+                        <Button Click="Next_OnClick">Next</Button>
+                        <Button Click="Export_OnClick">Export</Button>
+                        <Button Click="Loop_OnClick" Name="LoopButton">Loop: None</Button>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Margin="5" Spacing="8">
+                    <Button Name="GoToPlayingSongButton" Click="GoToPlayingSongButton_OnClick">Go to the playing song</Button>
+                    <CheckBox Name="PlayExternal" IsChecked="True">Play "External"</CheckBox>
+                    <CheckBox Name="PlayStreamed" IsChecked="True">Play "Streamed"</CheckBox>
+                    <CheckBox Name="PlayBanks" IsChecked="True">Play "Banks"</CheckBox>
+                    <CheckBox Name="PlayMusic" IsChecked="True">Play "Music"</CheckBox>
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Window>

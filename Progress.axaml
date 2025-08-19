@@ -1,0 +1,12 @@
+<Window xmlns="https://github.com/avaloniaui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+       mc:Ignorable="d" Width="400" Height="100" CanResize="False"
+       x:Class="HoyoversePckPlayer.Progress"
+       Title="Progress">
+    <StackPanel Orientation="Vertical" Margin="10">
+        <TextBlock HorizontalAlignment="Center" Name="Text">Sample Text</TextBlock>
+        <ProgressBar Height="35" Margin="0 16 0 0" Name="ProgressBar" Minimum="0" Maximum="1"/>
+    </StackPanel>
+</Window>
