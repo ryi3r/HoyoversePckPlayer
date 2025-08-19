@@ -545,10 +545,10 @@ public partial class MainWindow : Window
         PlayButton_OnClick(null, null);
     }
 
-    void Next_OnClick(object? sender, RoutedEventArgs? _)
+    void Next_OnClick(object? sender, RoutedEventArgs? ev)
     {
         var isOk = true;
-        if (Playlist.Count <= PlaylistCurrent)
+        if (Playlist.Count <= PlaylistCurrent || Loop == LoopMode.LoopOne)
         {
             switch (Loop)
             {
@@ -583,12 +583,17 @@ public partial class MainWindow : Window
                     }
                     break;
                 case LoopMode.LoopOne:
-                    isOk = false;
-                    LoopDone = false;
-                    if (ChannelHandle != null)
+                    if (ev != null)
+                        isOk = PlayNext(false);
+                    else
                     {
-                        Bass.ChannelSetPosition((int)ChannelHandle, 0);
-                        Bass.ChannelPlay((int)ChannelHandle);
+                        isOk = false;
+                        LoopDone = false;
+                        if (ChannelHandle != null)
+                        {
+                            Bass.ChannelSetPosition((int)ChannelHandle, 0);
+                            Bass.ChannelPlay((int)ChannelHandle);
+                        }
                     }
                     break;
                 case LoopMode.LoopPack:
