@@ -277,7 +277,7 @@ public partial class MainWindow : Window
         return hour > 0 ? $"{hour:00}:{min:00}:{sec:00}" : $"{min:00}:{sec:00}";
     }
 
-    static readonly Regex CompareRegex = new("([0-9]+)", RegexOptions.Compiled);
+    readonly static Regex CompareRegex = new("([0-9]+)", RegexOptions.Compiled);
     
     public static int CompareString(string x, string y)
     {
@@ -305,7 +305,7 @@ public partial class MainWindow : Window
     async void LoadFolder_OnClick(object? sender, RoutedEventArgs e)
     {
         var folder = await StorageProvider.OpenFolderPickerAsync(new());
-        var folders = folder.Select(entry => ((string, string, TreeViewItem?))(entry.Path.AbsolutePath, entry.Path.AbsolutePath, null)).ToList();
+        var folders = folder.Select(entry => ((string, string, TreeViewItem?))(Uri.UnescapeDataString(entry.Path.AbsolutePath), Uri.UnescapeDataString(entry.Path.AbsolutePath), null)).ToList();
         while (folders.Count > 0)
         {
             var (b, p, pN) = folders[0];
@@ -645,6 +645,7 @@ public partial class MainWindow : Window
                 _ => new(SelectedItem.GetRaw()),
             };
         }
+        stream.Position = 0;
         await stream.CopyToAsync(f);
         f.Close();
         await f.DisposeAsync();
