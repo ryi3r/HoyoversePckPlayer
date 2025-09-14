@@ -129,26 +129,47 @@ public partial class MainWindow : Window
         while (true)
         {
             if (tvi.Items.Count > 0)
-                SongTree.ExpandSubTree(tvi);
+            {
+                //Console.WriteLine($"expanding tvi: {tvi.Header}");
+                tvi.IsExpanded = true;
+            }
             if (tvi.Parent == null)
                 break;
             if (tvi.Parent is TreeViewItem nTvi)
+            {
+                //Console.WriteLine($"parent tvi: {tvi.Header}");
                 tvi = nTvi;
+            }
             else
                 break;
         }
+        //Console.WriteLine("ok");
     }
     
     bool IsHeaderValid(string header)
     {
         header = header.ToLower();
-        if (!(PlayBanks.IsChecked ?? true) && header.Contains("banks"))
-            return false;
-        if (!(PlayExternal.IsChecked ?? true) && header.Contains("external"))
-            return false;
-        if (!(PlayStreamed.IsChecked ?? true) && header.Contains("streamed"))
-            return false;
-        if (!(PlayMusic.IsChecked ?? true) && header.Contains("music"))
+        if (header.Contains("banks"))
+        {
+            if (!(PlayBanks.IsChecked ?? true) && !(PlayUnknown.IsChecked ?? true))
+                return false;
+        }
+        if (header.Contains("external"))
+        {
+            if (!(PlayExternal.IsChecked ?? true) && !(PlayUnknown.IsChecked ?? true))
+                return false;
+        }
+        if (header.Contains("streamed"))
+        {
+            if (!(PlayStreamed.IsChecked ?? true) && !(PlayUnknown.IsChecked ?? true))
+                return false;
+        }
+        if (header.Contains("music"))
+        {
+            if (!(PlayMusic.IsChecked ?? true) && !(PlayUnknown.IsChecked ?? true))
+                return false;
+        }
+        else if (!(PlayUnknown.IsChecked ?? true))
             return false;
         return true;
     }
@@ -309,12 +330,23 @@ public partial class MainWindow : Window
         while (folders.Count > 0)
         {
             var (b, p, pN) = folders[0];
+            Console.WriteLine(p);
+            folders.RemoveAt(0);
             var n = b == p ? null : new TreeViewItem()
             {
                 Header = p.StartsWith(b) ? p[(b.Length + (b.Length > 0 && b[^1] == '/' ? 0 : 1))..] : p,
             };
-            folders.RemoveAt(0);
-            folders.AddRange(Directory.EnumerateDirectories(p).Select(f => (p.Replace("\\", "/"), f, n)));
+            try
+            {
+                folders.AddRange(Directory.EnumerateDirectories(p, "*", new EnumerationOptions()
+                {
+                    AttributesToSkip = FileAttributes.ReparsePoint,
+                }).Select(f => (p.Replace("\\", "/"), f, n)));
+            }
+            catch
+            {
+                continue; // ignore if we cannot access the folder
+            }
             if (n != null)
             {
                 if (pN == null)
@@ -346,20 +378,37 @@ public partial class MainWindow : Window
                     pN.Items.Insert(index, n);
                 }
             }
-            foreach (var f in Directory.EnumerateFiles(p))
+            IEnumerable<string> enumFiles;
+            try
+            {
+                enumFiles = Directory.EnumerateFiles(p);
+            }
+            catch
+            {
+                continue; // probably no access
+            }
+            foreach (var f in enumFiles)
             {
                 if (!f.EndsWith(".pck") && !f.EndsWith(".bnk"))
                     continue;
                 var pck = new Pck(f);
+                //PckTable.Add(tvi, pckIndex);
+                var h = f[(f.Replace("\\", "/").LastIndexOf('/') + 1)..];
+                try
+                {
+                    pck.Read(h);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"failed to read pck: {ex}");
+                    continue;
+                }
                 var pckIndex = Pcks.Count;
                 Pcks.Add(pck);
-                var h = f[(f.Replace("\\", "/").LastIndexOf('/') + 1)..];
                 var tvi = new TreeViewItem()
                 {
                     Header = h,
                 };
-                //PckTable.Add(tvi, pckIndex);
-                pck.Read(h);
                 if (n == null)
                 {
                     var index = SongTree.Items.Count;
@@ -563,22 +612,20 @@ public partial class MainWindow : Window
                     break;
                 case LoopMode.Shuffle:
                     {
-                        var rng = new Random();
-                        int a;
-                        // todo: naive solution, ideally we want to collect a list of usable songs 
-                        for (a = 0; a < 10000; a++)
+                        var possibleEntries = new List<TreeViewItem>();
+                        foreach (var e in EntryTable.Keys)
                         {
-                            var i = rng.Next(0, EntryTable.Count);
-                            var e = EntryTable.ElementAt(i).Key;
-                            if (e.Parent is not TreeViewItem tvi)
-                                continue;
-                            if (!IsHeaderValid((string)tvi.Header!))
-                                continue;
-                            TreeExpandAll(tvi);
-                            SongTree.SelectedItem = e;
-                            break;
+                            if (e.Parent is TreeViewItem tvi && IsHeaderValid((string)tvi.Header!))
+                                possibleEntries.Add(e);
                         }
-                        if (a >= 10000)
+                        if (possibleEntries.Count > 0)
+                        {
+                            var i = new Random().Next(0, possibleEntries.Count);
+                            var tvi = (TreeViewItem)possibleEntries[i].Parent!;
+                            TreeExpandAll(tvi);
+                            SongTree.SelectedItem = possibleEntries[i];
+                        }
+                        else
                             isOk = false;
                     }
                     break;

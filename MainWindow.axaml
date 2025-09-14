@@ -41,6 +41,7 @@
                     <CheckBox Name="PlayStreamed" IsChecked="True">Play "Streamed"</CheckBox>
                     <CheckBox Name="PlayBanks" IsChecked="True">Play "Banks"</CheckBox>
                     <CheckBox Name="PlayMusic" IsChecked="True">Play "Music"</CheckBox>
+                    <CheckBox Name="PlayUnknown" IsChecked="True">Play Unknown</CheckBox>
                 </StackPanel>
             </DockPanel>
         </Grid>

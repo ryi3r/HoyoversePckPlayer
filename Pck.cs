@@ -3,8 +3,6 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
-using System.Threading;
 using Encoding = System.Text.Encoding;
 
 namespace HoyoversePckPlayer;
@@ -242,12 +240,12 @@ public class Pck(string fullPath)
     public long PckSize;
 
     //public Mutex Mutex = new();
-    static readonly HashSet<string> HashCollisions = [];
-    static readonly Mutex GlobalMutex = new();
+    /*readonly static HashSet<string> HashCollisions = [];
+    readonly static Mutex GlobalMutex = new();*/
 
     public static void ClearHashes()
     {
-        HashCollisions.Clear();
+        //HashCollisions.Clear();
     }
 
     public void Read(string? name = null)
@@ -411,7 +409,8 @@ public class Pck(string fullPath)
                     folders.Add("externals");
                 //folders.Add(Name);
                 folders.Add(LanguageList[languageId]);
-                var currentOffset = reader.BaseStream.Position;
+                // todo: reenable soon maybe? maybe use a stream instead or something
+                /*var currentOffset = reader.BaseStream.Position;
                 reader.BaseStream.Position = offset;
                 var songHash = Convert.ToHexStringLower(SHA256.HashData((reader.ReadBytes((int)size))));
                 reader.BaseStream.Position = currentOffset;
@@ -434,7 +433,7 @@ public class Pck(string fullPath)
                 finally
                 {
                     GlobalMutex.ReleaseMutex();
-                }
+                }*/
 
                 var data = new Wwise(FullPath)
                 {
@@ -447,8 +446,8 @@ public class Pck(string fullPath)
                     PckName = Name,
                     Folders = folders,
                     Name = altMode && isExternals ? $"{id.Item1}+{id.Item2}.{extension.ToString().ToLower()}" : $"{id.Item1}.{extension.ToString().ToLower()}",
-                    SongHash = songHash,
-                    IsWem = isWem,
+                    /*SongHash = songHash,
+                    IsWem = isWem,*/
                     //Mutex = Mutex,
                 };
                 //reader.BaseStream.Position = offset;
