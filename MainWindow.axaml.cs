@@ -544,21 +544,24 @@ public partial class MainWindow : Window
                 return $"{w.PckName}/{w.Path}";
             })));
             Console.WriteLine(Playlist.Count);*/
-            MemoryStream audioStream;
-            lock (Lock)
-                audioStream = PlayingItem!.GetWav(Vgm);
-            ChannelHandle = Bass.CreateStream(audioStream.GetBuffer(), 0, audioStream.Length, BassFlags.Default);
-            if (ChannelHandle == 0)
+            if (PlayingItem != null)
             {
-                Console.WriteLine($"Got an error while trying to create an audio stream: {Bass.LastError}");
-                ChannelHandle = null;
-                ErroredOut = true;
-            }
-            else
-            {
-                Bass.ChannelPlay((int)ChannelHandle);
-                LoopDone = false;
-                IsAudioPlaying = true;
+                MemoryStream audioStream;
+                lock (Lock)
+                    audioStream = PlayingItem.GetWav(Vgm);
+                ChannelHandle = Bass.CreateStream(audioStream.GetBuffer(), 0, audioStream.Length, BassFlags.Default);
+                if (ChannelHandle == 0)
+                {
+                    Console.WriteLine($"Got an error while trying to create an audio stream: {Bass.LastError}");
+                    ChannelHandle = null;
+                    ErroredOut = true;
+                }
+                else
+                {
+                    Bass.ChannelPlay((int)ChannelHandle);
+                    LoopDone = false;
+                    IsAudioPlaying = true;
+                }
             }
         }
     }
