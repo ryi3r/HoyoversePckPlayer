@@ -327,127 +327,152 @@ public partial class MainWindow : Window
     {
         var folder = await StorageProvider.OpenFolderPickerAsync(new());
         var folders = folder.Select(entry => ((string, string, TreeViewItem?))(Uri.UnescapeDataString(entry.Path.AbsolutePath), Uri.UnescapeDataString(entry.Path.AbsolutePath), null)).ToList();
-        while (folders.Count > 0)
+        var prog = new Progress
         {
-            var (b, p, pN) = folders[0];
-            Console.WriteLine(p);
-            folders.RemoveAt(0);
-            var n = b == p ? null : new TreeViewItem()
+            Text =
             {
-                Header = p.StartsWith(b) ? p[(b.Length + (b.Length > 0 && b[^1] == '/' ? 0 : 1))..] : p,
-            };
-            try
+                Text = "Loading...",
+            },
+            ProgressBar =
             {
-                folders.AddRange(Directory.EnumerateDirectories(p, "*", new EnumerationOptions()
+                IsIndeterminate = true,
+            },
+        };
+        prog.Show(this);
+        var task = Task.Run(() =>
+        {
+            while (folders.Count > 0)
+            {
+                var (b, p, pN) = folders[0];
+                Console.WriteLine(p);
+                folders.RemoveAt(0);
+                var n = b == p ? null : Dispatcher.UIThread.Invoke(() => new TreeViewItem()
                 {
-                    AttributesToSkip = FileAttributes.ReparsePoint,
-                }).Select(f => (p.Replace("\\", "/"), f, n)));
-            }
-            catch
-            {
-                continue; // ignore if we cannot access the folder
-            }
-            if (n != null)
-            {
-                if (pN == null)
-                {
-                    var index = SongTree.Items.Count;
-                    for (var i = 0; i < SongTree.Items.Count; i++)
-                    {
-                        index = i + 1;
-                        var cTvi = (TreeViewItem)SongTree.Items[i]!;
-                        if (CompareString((string)cTvi.Header!, (string)n.Header!) < 0)
-                            continue;
-                        index = i;
-                        break;
-                    }
-                    SongTree.Items.Insert(index, n);
-                }
-                else
-                {
-                    var index = pN.Items.Count;
-                    for (var i = 0; i < pN.Items.Count; i++)
-                    {
-                        index = i + 1;
-                        var cTvi = (TreeViewItem)pN.Items[i]!;
-                        if (CompareString((string)cTvi.Header!, (string)n.Header!) < 0)
-                            continue;
-                        index = i;
-                        break;
-                    }
-                    pN.Items.Insert(index, n);
-                }
-            }
-            IEnumerable<string> enumFiles;
-            try
-            {
-                enumFiles = Directory.EnumerateFiles(p);
-            }
-            catch
-            {
-                continue; // probably no access
-            }
-            foreach (var f in enumFiles)
-            {
-                if (!f.EndsWith(".pck") && !f.EndsWith(".bnk"))
-                    continue;
-                var pck = new Pck(f);
-                //PckTable.Add(tvi, pckIndex);
-                var h = f[(f.Replace("\\", "/").LastIndexOf('/') + 1)..];
+                    Header = p.StartsWith(b) ? p[(b.Length + (b.Length > 0 && b[^1] == '/' ? 0 : 1))..] : p,
+                });
                 try
                 {
-                    pck.Read(h);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"failed to read pck: {ex}");
-                    continue;
-                }
-                var pckIndex = Pcks.Count;
-                Pcks.Add(pck);
-                var tvi = new TreeViewItem()
-                {
-                    Header = h,
-                };
-                if (n == null)
-                {
-                    var index = SongTree.Items.Count;
-                    for (var i = 0; i < SongTree.Items.Count; i++)
+                    folders.AddRange(Directory.EnumerateDirectories(p, "*", new EnumerationOptions()
                     {
-                        index = i + 1;
-                        var cTvi = (TreeViewItem)SongTree.Items[i]!;
-                        if (CompareString((string)cTvi.Header!, (string)tvi.Header!) < 0)
-                            continue;
-                        index = i;
-                        break;
+                        AttributesToSkip = FileAttributes.ReparsePoint,
+                    }).Select(f => (p.Replace("\\", "/"), f, n)));
+                }
+                catch
+                {
+                    continue; // ignore if we cannot access the folder
+                }
+                if (n != null)
+                {
+                    Dispatcher.UIThread.Invoke(() =>
+                    {
+
+                        if (pN == null)
+                        {
+                            var index = SongTree.Items.Count;
+                            for (var i = 0; i < SongTree.Items.Count; i++)
+                            {
+                                index = i + 1;
+                                var cTvi = (TreeViewItem)SongTree.Items[i]!;
+                                if (CompareString((string)cTvi.Header!, (string)n.Header!) < 0)
+                                    continue;
+                                index = i;
+                                break;
+                            }
+                            SongTree.Items.Insert(index, n);
+                        }
+                        else
+                        {
+                            var index = pN.Items.Count;
+                            for (var i = 0; i < pN.Items.Count; i++)
+                            {
+                                index = i + 1;
+                                var cTvi = (TreeViewItem)pN.Items[i]!;
+                                if (CompareString((string)cTvi.Header!, (string)n.Header!) < 0)
+                                    continue;
+                                index = i;
+                                break;
+                            }
+                            pN.Items.Insert(index, n);
+                        }
+                    });
+                }
+                IEnumerable<string> enumFiles;
+                try
+                {
+                    enumFiles = Directory.EnumerateFiles(p);
+                }
+                catch
+                {
+                    continue; // probably no access
+                }
+                foreach (var f in enumFiles)
+                {
+                    if (!f.EndsWith(".pck") && !f.EndsWith(".bnk"))
+                        continue;
+                    Dispatcher.UIThread.Invoke(() => prog.Text.Text = $"Processing file: {Path.GetFileName(f)}");
+                    var pck = new Pck(f);
+                    //PckTable.Add(tvi, pckIndex);
+                    var h = f[(f.Replace("\\", "/").LastIndexOf('/') + 1)..];
+                    try
+                    {
+                        pck.Read(h);
                     }
-                    SongTree.Items.Insert(index, tvi);
-                }
-                else
-                {
-                    var index = 0;
-                    for (var i = 0; i < n.Items.Count; i++)
+                    catch (Exception ex)
                     {
-                        index = i + 1;
-                        var cTvi = (TreeViewItem)n.Items[i]!;
-                        if (CompareString((string)cTvi.Header!, (string)tvi.Header!) < 0)
-                            continue;
-                        index = i;
-                        break;
+                        Console.WriteLine($"failed to read pck: {ex}");
+                        continue;
                     }
-                    n.Items.Insert(index, tvi);
-                }
-                foreach (var j in pck.FileSystem.Keys.Order())
-                {
-                    var nTvi = new TreeViewItem()
+                    var pckIndex = Pcks.Count;
+                    Pcks.Add(pck);
+                    Dispatcher.UIThread.Invoke(() =>
                     {
-                        Header = pck.FileSystem[j].Path ?? "<unknown>",
-                    };
-                    tvi.Items.Add(nTvi);
-                    EntryTable.Add(nTvi, (pckIndex, j));
+                        var tvi = new TreeViewItem()
+                        {
+                            Header = h,
+                        };
+                        if (n == null)
+                        {
+                            var index = SongTree.Items.Count;
+                            for (var i = 0; i < SongTree.Items.Count; i++)
+                            {
+                                index = i + 1;
+                                var cTvi = (TreeViewItem)SongTree.Items[i]!;
+                                if (CompareString((string)cTvi.Header!, (string)tvi.Header!) < 0)
+                                    continue;
+                                index = i;
+                                break;
+                            }
+                            SongTree.Items.Insert(index, tvi);
+                        }
+                        else
+                        {
+                            var index = 0;
+                            for (var i = 0; i < n.Items.Count; i++)
+                            {
+                                index = i + 1;
+                                var cTvi = (TreeViewItem)n.Items[i]!;
+                                if (CompareString((string)cTvi.Header!, (string)tvi.Header!) < 0)
+                                    continue;
+                                index = i;
+                                break;
+                            }
+                            n.Items.Insert(index, tvi);
+                        }
+                        foreach (var j in pck.FileSystem.Keys.Order())
+                        {
+                            var nTvi = new TreeViewItem()
+                            {
+                                Header = pck.FileSystem[j].Path ?? "<unknown>",
+                            };
+                            tvi.Items.Add(nTvi);
+                            EntryTable.Add(nTvi, (pckIndex, j));
+                        }
+                    });
                 }
             }
-        }
+        });
+        await task;
+        prog.Close();
     }
 
     void AddToPlaylist(TreeViewItem tvi)
@@ -682,24 +707,41 @@ public partial class MainWindow : Window
         });
         if (file == null)
             return;
-        var f = await file.OpenWriteAsync();
-        var ext = Path.GetExtension(file.Path.AbsoluteUri);
-
-        MemoryStream stream;
-        lock (Lock)
+        var prog = new Progress
         {
-            stream = ext switch
+            Text =
             {
-                ".wav" => SelectedItem.GetWav(Vgm),
-                ".ogg" => SelectedItem.GetOgg(Vgm),
-                _ => new(SelectedItem.GetRaw()),
-            };
-        }
-        stream.Position = 0;
-        await stream.CopyToAsync(f);
-        f.Close();
-        await f.DisposeAsync();
-        await stream.DisposeAsync();
+                Text = "Exporting file...",
+            },
+            ProgressBar =
+            {
+                IsIndeterminate = true,
+            },
+        };
+        prog.Show(this);
+        var task = Task.Run(async () =>
+        {
+            var f = await file.OpenWriteAsync();
+            var ext = Path.GetExtension(file.Path.AbsoluteUri);
+
+            MemoryStream stream;
+            lock (Lock)
+            {
+                stream = ext switch
+                {
+                    ".wav" => SelectedItem.GetWav(Vgm),
+                    ".ogg" => SelectedItem.GetOgg(Vgm),
+                    _ => new(SelectedItem.GetRaw()),
+                };
+            }
+            stream.Position = 0;
+            await stream.CopyToAsync(f);
+            f.Close();
+            await f.DisposeAsync();
+            await stream.DisposeAsync();
+        });
+        await task;
+        prog.Close();
     }
 
     async void ExportAll_OnClick(object? sender, RoutedEventArgs e)
@@ -711,80 +753,98 @@ public partial class MainWindow : Window
         });
         if (file == null)
             return;
-        Directory.CreateDirectory(file.Path.AbsolutePath);
-        var bPath = $"{file.Path.AbsolutePath}/";
-        var ext = Path.GetExtension(file.Path.AbsoluteUri);
-        var vgms = new List<(VgmStreamWasm, Lock)>();
-        for (var i = 0; i < Environment.ProcessorCount; i++)
-            vgms.Add((new(true), new()));
-        var n = 0;
-        var tasks = new List<Task>();
-        foreach (var (i, pck) in Pcks.Index())
+        var prog = new Progress
         {
-            var dPath = $"{bPath}/{pck.Name}_{i}";
-            Directory.CreateDirectory(dPath);
-            foreach (var w in pck.FileSystem.Values)
+            Text =
             {
-                while (tasks.Count >= vgms.Count)
+                Text = "Exporting all files...",
+            },
+            ProgressBar =
+            {
+                IsIndeterminate = true,
+            },
+        };
+        prog.Show(this);
+        var task = Task.Run(async () =>
+        {
+            Directory.CreateDirectory(file.Path.AbsolutePath);
+            var bPath = $"{file.Path.AbsolutePath}/";
+            var ext = Path.GetExtension(file.Path.AbsoluteUri);
+            var vgms = new List<(VgmStreamWasm, Lock)>();
+            for (var i = 0; i < Environment.ProcessorCount; i++)
+                vgms.Add((new(true), new()));
+            var n = 0;
+            var tasks = new List<Task>();
+            foreach (var (i, pck) in Pcks.Index())
+            {
+                var dPath = $"{bPath}/{pck.Name}_{i}";
+                Directory.CreateDirectory(dPath);
+                foreach (var w in pck.FileSystem.Values)
                 {
-                    while (true)
+                    while (tasks.Count >= vgms.Count)
                     {
-                        var gotTask = tasks.FirstOrDefault(t => t.IsCompleted);
-                        /*foreach (var t in tasks)
-                            Console.WriteLine(t.Status);*/
-                        if (gotTask == null)
+                        while (true)
                         {
-                            await Task.Delay(5);
-                            continue;
-                        }
-                        tasks.Remove(gotTask);
-                        break;
-                    }
-                }
-                var cur = vgms[n];
-                n++;
-                n %= vgms.Count;
-                tasks.Add(Task.Run(async () =>
-                {
-                    MemoryStream stream;
-                    lock (cur.Item2)
-                    {
-                        stream = ext switch
-                        {
-                            ".wav" => w.GetWav(cur.Item1),
-                            ".ogg" => w.GetOgg(cur.Item1),
-                            _ => new(w.GetRaw()),
-                        };
-                    }
-                    stream.Position = 0;
-                    var fPath = $"{dPath}/{w.Name ?? "unknown"}";
-                    if (stream.Length > 0)
-                    {
-                        switch (ext)
-                        {
-                            case ".wav":
-                                fPath += ".wav";
-                                break;
-                            case ".ogg":
-                                fPath += ".ogg";
-                                break;
+                            var gotTask = tasks.FirstOrDefault(t => t.IsCompleted);
+                            /*foreach (var t in tasks)
+                                Console.WriteLine(t.Status);*/
+                            if (gotTask == null)
+                            {
+                                await Task.Delay(5);
+                                continue;
+                            }
+                            tasks.Remove(gotTask);
+                            break;
                         }
                     }
-                    else
+                    var cur = vgms[n];
+                    n++;
+                    n %= vgms.Count;
+                    tasks.Add(Task.Run(async () =>
                     {
+                        var fPath = $"{dPath}/{w.Name ?? "unknown"}";
+                        Dispatcher.UIThread.Invoke(() => prog.Text.Text = $"Processing file: {pck.Name}_{i}/{w.Name ?? "unknown"}");
+                        MemoryStream stream;
+                        lock (cur.Item2)
+                        {
+                            stream = ext switch
+                            {
+                                ".wav" => w.GetWav(cur.Item1),
+                                ".ogg" => w.GetOgg(cur.Item1),
+                                _ => new(w.GetRaw()),
+                            };
+                        }
+                        stream.Position = 0;
+                        if (stream.Length > 0)
+                        {
+                            switch (ext)
+                            {
+                                case ".wav":
+                                    fPath += ".wav";
+                                    break;
+                                case ".ogg":
+                                    fPath += ".ogg";
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            await stream.DisposeAsync();
+                            stream = new(w.GetRaw());
+                        }
+                        var f = File.Create(fPath);
+                        await stream.CopyToAsync(f);
                         await stream.DisposeAsync();
-                        stream = new(w.GetRaw());
-                    }
-                    var f = File.Create(fPath);
-                    await stream.CopyToAsync(f);
-                    await stream.DisposeAsync();
-                    f.Close();
-                    await f.DisposeAsync();
-                }));
+                        f.Close();
+                        await f.DisposeAsync();
+                    }));
+                }
             }
-        }
-        foreach (var t in tasks)
-            await t;
+            foreach (var t in tasks)
+                await t;
+        });
+        await task;
+        prog.Close();
     }
 
     void ClearData_OnClick(object? sender, RoutedEventArgs e)
@@ -814,39 +874,60 @@ public partial class MainWindow : Window
             AllowMultiple = true,
             FileTypeFilter = [new("*.pck")],
         });
-        foreach (var file in files)
+        var prog = new Progress
         {
-            var pck = new Pck(file.Path.AbsolutePath);
-            var pckIndex = Pcks.Count;
-            Pcks.Add(pck);
-            var h = file.Path.AbsolutePath[(file.Path.AbsolutePath.Replace("\\", "/").LastIndexOf('/') + 1)..];
-            var tvi = new TreeViewItem()
+            Text =
             {
-                Header = h,
-            };
-            //PckTable.Add(tvi, pckIndex);
-            pck.Read(h);
-            var index = SongTree.Items.Count;
-            for (var i = 0; i < SongTree.Items.Count; i++)
+                Text = "Loading...",
+            },
+            ProgressBar =
             {
-                index = i + 1;
-                var cTvi = (TreeViewItem)SongTree.Items[i]!;
-                if (CompareString((string)cTvi.Header!, (string)tvi.Header) < 0)
-                    continue;
-                index = i;
-                break;
-            }
-            SongTree.Items.Insert(index, tvi);
-            foreach (var (j, d) in pck.FileSystem)
+                IsIndeterminate = true,
+            },
+        };
+        prog.Show(this);
+        var task = Task.Run(() =>
+        {
+            foreach (var file in files)
             {
-                var nTvi = new TreeViewItem()
+                Dispatcher.UIThread.Invoke(() => prog.Text.Text = $"Processing file: {Path.GetFileName(file.Path.AbsolutePath)}");
+                var pck = new Pck(file.Path.AbsolutePath);
+                var pckIndex = Pcks.Count;
+                Pcks.Add(pck);
+                var h = file.Path.AbsolutePath[(file.Path.AbsolutePath.Replace("\\", "/").LastIndexOf('/') + 1)..];
+                var tvi = Dispatcher.UIThread.Invoke(() => new TreeViewItem()
                 {
-                    Header = d.Path ?? "<unknown>",
-                };
-                tvi.Items.Add(nTvi);
-                EntryTable.Add(nTvi, (pckIndex, j));
+                    Header = h,
+                });
+                //PckTable.Add(tvi, pckIndex);
+                pck.Read(h);
+                var index = SongTree.Items.Count;
+                for (var i = 0; i < SongTree.Items.Count; i++)
+                {
+                    index = i + 1;
+                    var cTvi = (TreeViewItem)SongTree.Items[i]!;
+                    if (CompareString((string)cTvi.Header!, (string)tvi.Header!) < 0)
+                        continue;
+                    index = i;
+                    break;
+                }
+                Dispatcher.UIThread.Invoke(() =>
+                {
+                    SongTree.Items.Insert(index, tvi);
+                    foreach (var (j, d) in pck.FileSystem)
+                    {
+                        var nTvi = new TreeViewItem()
+                        {
+                            Header = d.Path ?? "<unknown>",
+                        };
+                        tvi.Items.Add(nTvi);
+                        EntryTable.Add(nTvi, (pckIndex, j));
+                    }
+                });
             }
-        }
+        });
+        await task;
+        prog.Close();
     }
 
     void PauseButton_OnClick(object? sender, RoutedEventArgs e)

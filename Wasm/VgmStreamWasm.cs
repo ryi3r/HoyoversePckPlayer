@@ -43,7 +43,7 @@ public class VgmStreamWasm : IDisposable
         Env.Add("_", "vgmstream");
         {
             var asm = Assembly.GetExecutingAssembly();
-            var s = asm.GetManifestResourceStream($"{asm.GetName().Name}.vgmstream.vgmstream-cli.wasm")!;
+            var s = asm.GetManifestResourceStream($"{asm.GetName().Name}.VgmStream.vgmstream-cli.wasm")!;
             _module = Module.FromStream(_engine, "vgmstream-cli.wasm", s);
             s.Dispose();
         }

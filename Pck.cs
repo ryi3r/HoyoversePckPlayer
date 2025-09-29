@@ -156,7 +156,7 @@ public class Wwise(string fullPath)
         // third header holds the bitstream codebook.
 
         var comments = new Comments();
-        comments.AddTag("ARTIST", "GenshinFilePlayer");
+        comments.AddTag("ARTIST", "HoyoversePckPlayer");
 
         var infoPacket = HeaderPacketBuilder.BuildInfoPacket(info);
         var commentsPacket = HeaderPacketBuilder.BuildCommentsPacket(comments);
@@ -410,14 +410,14 @@ public class Pck(string fullPath)
                 //folders.Add(Name);
                 folders.Add(LanguageList[languageId]);
                 // todo: reenable soon maybe? maybe use a stream instead or something
-                /*var currentOffset = reader.BaseStream.Position;
-                reader.BaseStream.Position = offset;
-                var songHash = Convert.ToHexStringLower(SHA256.HashData((reader.ReadBytes((int)size))));
+                var currentOffset = reader.BaseStream.Position;
+                /*reader.BaseStream.Position = offset;
+                var songHash = Convert.ToHexStringLower(SHA256.HashData((reader.ReadBytes((int)size))));*/
                 reader.BaseStream.Position = currentOffset;
                 var header = Encoding.ASCII.GetString(reader.ReadBytes(4));
                 var isWem = header is "RIFF" or "RIFX";
                 reader.BaseStream.Position = currentOffset;
-                GlobalMutex.WaitOne();
+                /*GlobalMutex.WaitOne();
                 try
                 {
                     if (HashCollisions.Contains(songHash))
@@ -446,8 +446,8 @@ public class Pck(string fullPath)
                     PckName = Name,
                     Folders = folders,
                     Name = altMode && isExternals ? $"{id.Item1}+{id.Item2}.{extension.ToString().ToLower()}" : $"{id.Item1}.{extension.ToString().ToLower()}",
-                    /*SongHash = songHash,
-                    IsWem = isWem,*/
+                    //SongHash = songHash,
+                    IsWem = isWem,
                     //Mutex = Mutex,
                 };
                 //reader.BaseStream.Position = offset;
