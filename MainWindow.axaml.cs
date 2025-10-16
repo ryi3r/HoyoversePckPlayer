@@ -178,7 +178,7 @@ public partial class MainWindow : Window
     {
         if (PlayingTree == null)
             return false;
-        if (PlayingTree!.Parent! is not TreeViewItem tvi)
+        if (PlayingTree!.Parent is not TreeViewItem tvi)
             return true;
         var index = tvi.Items.IndexOf(PlayingTree);
         if (index + 1 < tvi.Items.Count && IsHeaderValid((string)tvi.Header!))
@@ -234,7 +234,7 @@ public partial class MainWindow : Window
     {
         if (PlayingTree == null)
             return false;
-        if (PlayingTree!.Parent! is not TreeViewItem tvi)
+        if (PlayingTree!.Parent is not TreeViewItem tvi)
             return true;
         var index = tvi.Items.IndexOf(PlayingTree);
         if (index - 1 < tvi.Items.Count && IsHeaderValid((string)tvi.Header!))
@@ -344,7 +344,7 @@ public partial class MainWindow : Window
             while (folders.Count > 0)
             {
                 var (b, p, pN) = folders[0];
-                Console.WriteLine(p);
+                //Console.WriteLine(p);
                 folders.RemoveAt(0);
                 var n = b == p ? null : Dispatcher.UIThread.Invoke(() => new TreeViewItem()
                 {
@@ -673,7 +673,7 @@ public partial class MainWindow : Window
                     break;
                 case LoopMode.LoopPack:
                     {
-                        if (PlayingTree!.Parent! is TreeViewItem tvi)
+                        if (PlayingTree!.Parent is TreeViewItem tvi)
                         {
                             var index = tvi.Items.IndexOf(PlayingTree);
                             if (index + 1 < tvi.Items.Count && IsHeaderValid((string)tvi.Header!))

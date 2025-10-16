@@ -12,16 +12,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="11.3.6" />
-        <PackageReference Include="Avalonia.Desktop" Version="11.3.6" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6" />
+        <PackageReference Include="Avalonia" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.7" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.6">
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.7">
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="ManagedBass" Version="4.0.1" />
+        <PackageReference Include="ManagedBass" Version="4.0.2" />
         
         <PackageReference Include="OggVorbisEncoder" Version="1.2.2" />
         
@@ -31,11 +31,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="vgmstream\vgmstream-cli.js" />
-      <EmbeddedResource Include="VgmStream\vgmstream-cli.js" />
       <None Remove="vgmstream\vgmstream-cli.wasm" />
       <EmbeddedResource Include="VgmStream\vgmstream-cli.wasm" />
-      <None Remove="unmapped\139563132.wem" />
       <None Update="libbass.so">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
