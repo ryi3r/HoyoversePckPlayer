@@ -14,6 +14,7 @@
                 <MenuItem Header="Clear Data" Click="ClearData_OnClick"/>
             </MenuItem>
             <MenuItem Click="ExportAll_OnClick" Header="Export All"/>
+            <MenuItem Click="Search_OnClick" Header="Search"/>
         </Menu>
         <Grid ColumnDefinitions="300, 4, *">
             <TreeView Name="SongTree" SelectionChanged="SongTree_OnSelectionChanged"/>
@@ -35,13 +36,19 @@
                         <Button Click="Loop_OnClick" Name="LoopButton">Loop: None</Button>
                     </StackPanel>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Margin="5" Spacing="8">
-                    <Button Name="GoToPlayingSongButton" Click="GoToPlayingSongButton_OnClick">Go to the playing song</Button>
-                    <CheckBox Name="PlayExternal" IsChecked="True">Play "External"</CheckBox>
-                    <CheckBox Name="PlayStreamed" IsChecked="True">Play "Streamed"</CheckBox>
-                    <CheckBox Name="PlayBanks" IsChecked="True">Play "Banks"</CheckBox>
-                    <CheckBox Name="PlayMusic" IsChecked="True">Play "Music"</CheckBox>
-                    <CheckBox Name="PlayUnknown" IsChecked="True">Play Unknown</CheckBox>
+                <StackPanel VerticalAlignment="Bottom">
+                    <StackPanel Orientation="Horizontal" Margin="5" Spacing="8">
+                        <TextBlock>BLAKE3 Hash:</TextBlock>
+                        <SelectableTextBlock Name="SelectableTextBlock">----</SelectableTextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5" Spacing="8">
+                        <Button Name="GoToPlayingSongButton" Click="GoToPlayingSongButton_OnClick">Go to the playing song</Button>
+                        <CheckBox Name="PlayExternal" IsChecked="True">Play "External"</CheckBox>
+                        <CheckBox Name="PlayStreamed" IsChecked="True">Play "Streamed"</CheckBox>
+                        <CheckBox Name="PlayBanks" IsChecked="True">Play "Banks"</CheckBox>
+                        <CheckBox Name="PlayMusic" IsChecked="True">Play "Music"</CheckBox>
+                        <CheckBox Name="PlayUnknown" IsChecked="True">Play Unknown</CheckBox>
+                    </StackPanel>
                 </StackPanel>
             </DockPanel>
         </Grid>

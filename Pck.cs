@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using OggVorbisEncoder;
 using System;
 using System.Buffers.Binary;
@@ -23,6 +24,7 @@ public class Wwise(string fullPath)
     public string FullPath = fullPath;
     public double Duration = -1;
     public bool IsWem;
+    public TreeViewItem? Item;
 
     public string? GetPossibleName()
     {

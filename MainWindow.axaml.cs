@@ -81,6 +81,20 @@ public partial class MainWindow : Window
                     _ => "Loop: ???",
                 };
                 
+                if (SelectedItem != null)
+                {
+                    SelectableTextBlock.Text = "Calculating...";
+                    if (SelectedItem.SongHash == null)
+                    {
+                        SelectedItem.SongHash = "";
+                        var item = SelectedItem;
+                        Task.Run(() => item.SongHash = Blake3.Hasher.Hash(item.GetRaw()).ToString());
+                    }
+                    else if (SelectedItem.SongHash != "")
+                        SelectableTextBlock.Text = SelectedItem.SongHash;
+                }
+                else
+                    SelectableTextBlock.Text = "----";
                 if (SelectedItem != PlayingItem /*|| !MediaPlayer.IsPlaying*/)
                 {
                     SongCurrentDuration.Text = "00:00";
@@ -124,7 +138,7 @@ public partial class MainWindow : Window
         vgm.Dispose();*/
     }
 
-    void TreeExpandAll(TreeViewItem tvi)
+    public void TreeExpandAll(TreeViewItem tvi)
     {
         while (true)
         {
@@ -339,7 +353,7 @@ public partial class MainWindow : Window
             },
         };
         prog.Show(this);
-        var task = Task.Run(() =>
+        await Task.Run(() =>
         {
             while (folders.Count > 0)
             {
@@ -458,7 +472,7 @@ public partial class MainWindow : Window
                             }
                             n.Items.Insert(index, tvi);
                         }
-                        foreach (var j in pck.FileSystem.Keys.Order())
+                        foreach (var (j, e) in pck.FileSystem.OrderBy(x => x.Key))
                         {
                             var nTvi = new TreeViewItem()
                             {
@@ -466,12 +480,12 @@ public partial class MainWindow : Window
                             };
                             tvi.Items.Add(nTvi);
                             EntryTable.Add(nTvi, (pckIndex, j));
+                            e.Item = nTvi;
                         }
                     });
                 }
             }
         });
-        await task;
         prog.Close();
     }
 
@@ -922,6 +936,7 @@ public partial class MainWindow : Window
                         };
                         tvi.Items.Add(nTvi);
                         EntryTable.Add(nTvi, (pckIndex, j));
+                        d.Item = nTvi;
                     }
                 });
             }
@@ -938,5 +953,13 @@ public partial class MainWindow : Window
             Bass.ChannelPlay((int)ChannelHandle);
         else
             Bass.ChannelPause((int)ChannelHandle);
+    }
+
+    void Search_OnClick(object? sender, RoutedEventArgs e)
+    {
+        new Search()
+        {
+            MWindow = this,
+        }.Show(this);
     }
 }
