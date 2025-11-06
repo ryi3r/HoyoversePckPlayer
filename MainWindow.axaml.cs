@@ -639,7 +639,7 @@ public partial class MainWindow : Window
     void Next_OnClick(object? sender, RoutedEventArgs? ev)
     {
         var isOk = true;
-        if (Playlist.Count <= PlaylistCurrent || Loop == LoopMode.LoopOne)
+        if (Playlist.Count <= PlaylistCurrent || Loop is LoopMode.LoopOne or LoopMode.None)
         {
             switch (Loop)
             {
