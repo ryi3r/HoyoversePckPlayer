@@ -1,1 +1,1 @@
-Migrated to [Codeberg](https://codeberg.org/ryi3r/HoyoversePckPlayer)
+Migrated to [Codefloe](https://codefloe.com/ryi3r/HoyoversePckPlayer)
