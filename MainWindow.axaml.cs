@@ -4,10 +4,13 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using ManagedBass;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -50,12 +53,12 @@ public partial class MainWindow : Window
     public List<TreeViewItem> Playlist = [];
     public int PlaylistCurrent;
     public bool SelectionUpdatePlaylist = true;
-    
+
     public MainWindow()
     {
         InitializeComponent();
         Bass.Init();
-        
+
         Timer.Tick += (_, _) =>
         {
             IsInTimer = true;
@@ -80,7 +83,7 @@ public partial class MainWindow : Window
                     LoopMode.LoopAll => "Loop: Loop All",
                     _ => "Loop: ???",
                 };
-                
+
                 if (SelectedItem != null)
                 {
                     SelectableTextBlock.Text = "Calculating...";
@@ -159,7 +162,7 @@ public partial class MainWindow : Window
         }
         //Console.WriteLine("ok");
     }
-    
+
     bool IsHeaderValid(string header)
     {
         header = header.ToLower();
@@ -299,7 +302,7 @@ public partial class MainWindow : Window
         }
         return true;
     }
-    
+
     public static string TimeMsToString(long time)
     {
         var sec = (int)Math.Floor(time / 1000d) % 60;
@@ -313,12 +316,12 @@ public partial class MainWindow : Window
     }
 
     readonly static Regex CompareRegex = new("([0-9]+)", RegexOptions.Compiled);
-    
+
     public static int CompareString(string x, string y)
     {
         if (x == y)
             return 0;
-        
+
         var x1 = CompareRegex.Split(x.Replace(" ", ""));
         var y1 = CompareRegex.Split(y.Replace(" ", ""));
 
@@ -336,7 +339,7 @@ public partial class MainWindow : Window
             return -1;
         return 0;
     }
-    
+
     async void LoadFolder_OnClick(object? sender, RoutedEventArgs e)
     {
         var folder = await StorageProvider.OpenFolderPickerAsync(new());
@@ -496,7 +499,7 @@ public partial class MainWindow : Window
         else
             Playlist.Add(tvi);
     }
-    
+
     void SongTree_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (SongTree.SelectedItem == null)
@@ -507,33 +510,7 @@ public partial class MainWindow : Window
         SelectedItem = Pcks[v.Item1].FileSystem[v.Item2];
         if (SelectionUpdatePlaylist)
             AddToPlaylist(tvi);
-        // ReSharper disable once CompareOfFloatsByEqualityOperator
-        if (SelectedItem.Duration == -1)
-        {
-            var targetFilename = $"/{Path.GetRandomFileName()}.{SelectedItem.Extension.ToString().ToLower()}";
-            string json;
-            lock (Lock)
-            {
-                Vgm.Fs.InsertResource(targetFilename, SelectedItem.GetRaw());
-                var lastIgnore = Vgm.Fs.IgnoreInternalPipes; 
-                Vgm.Fs.IgnoreInternalPipes = false;
-                Vgm.CallMain("-I", "-m", targetFilename);
-                Vgm.Fs.IgnoreInternalPipes = lastIgnore;
-                Vgm.Fs.RemoveResource(targetFilename);
-                json = Encoding.UTF8.GetString(Vgm.FlushStdout());
-                Vgm.FlushStderr();
-            }
-            try
-            {
-                var metadata = JsonSerializer.Deserialize<JsonElement>(json, JsonSerializerOptions.Default);
-                SelectedItem.Duration = (double)metadata.GetProperty("numberOfSamples").GetInt32() / metadata.GetProperty("sampleRate").GetInt32();
-            }
-            catch
-            {
-                SelectedItem.Duration = 0;
-            }
-            //Console.WriteLine($"finished: {SelectedItem.Name}");
-        }
+        SelectedItem.UpdateSongDuration(Lock, Vgm);
         SongName.Text = $"{SelectedItem.PckName}/{SelectedItem.Path}";
         SongTotalDuration.Text = $"{SelectedItem.Duration / 60:00}:{SelectedItem.Duration % 60:00}";
     }
@@ -856,6 +833,65 @@ public partial class MainWindow : Window
             }
             foreach (var t in tasks)
                 await t;
+        });
+        await task;
+        prog.Close();
+    }
+
+    async void ExportData_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new()
+        {
+            DefaultExtension = ".json",
+            FileTypeChoices = [new("JSON File") { Patterns = ["*.json"] }],
+        });
+        if (file == null)
+            return;
+        var prog = new Progress
+        {
+            Text = { Text = "Processing data...", },
+            ProgressBar = { ShowProgressText = true, },
+        };
+        prog.Show(this);
+        var task = Task.Run(async () =>
+        {
+            var tot = Pcks.Sum(p => p.FileSystem.Count);
+            Dispatcher.UIThread.Invoke(() => prog.ProgressBar.Maximum = tot);
+            var sw = Stopwatch.StartNew();
+            var done = 0;
+            var data = new List<Dictionary<string, object>>();
+            foreach (var (i, pck) in Pcks.Index())
+            {
+                var d = new List<Dictionary<string, object?>>();
+                data.Add(new Dictionary<string, object>()
+                {
+                    ["filename"] = pck.Name,
+                    ["music"] = d,
+                });
+                foreach (var w in pck.FileSystem.Values)
+                {
+                    w.UpdateSongDuration(Lock, Vgm);
+                    w.SongHash ??= Blake3.Hasher.Hash(w.GetRaw()).ToString();
+                    d.Add(new()
+                    {
+                        ["name"] = w.Name,
+                        ["duration"] = w.Duration,
+                        ["blake3_hash"] = w.SongHash,
+                        ["start_id"] = w.Id.Item1,
+                        ["end_id"] = w.Id.Item2,
+                        ["size"] = w.Size,
+                    });
+                    done++;
+                    if (sw.ElapsedMilliseconds >= 300)
+                    {
+                        Dispatcher.UIThread.Invoke(() => prog.ProgressBar.Value = done);
+                        sw.Restart();
+                    }
+                }
+            }
+            var f = await file.OpenWriteAsync();
+            await JsonSerializer.SerializeAsync(f, data, new JsonSerializerOptions { WriteIndented = true, IndentCharacter = '\t', IndentSize = 1, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+            await f.DisposeAsync();
         });
         await task;
         prog.Close();

@@ -9,6 +9,7 @@
             </MenuItem>
             <MenuItem Click="ExportAll_OnClick" Header="Export All" />
             <MenuItem Click="Search_OnClick" Header="Search" />
+            <MenuItem Click="ExportData_OnClick" Header="Export data as JSON" />
         </Menu>
         <Grid ColumnDefinitions="300, 4, *">
             <TreeView Name="SongTree" SelectionChanged="SongTree_OnSelectionChanged" />

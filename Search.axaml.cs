@@ -15,7 +15,7 @@ public partial class Search : Window
 {
     public MainWindow? MWindow;
     List<Wwise> _found = [];
-    
+
     public Search()
     {
         InitializeComponent();
@@ -27,16 +27,10 @@ public partial class Search : Window
             return;
         ListBox.Items.Clear();
         _found.Clear();
-        var prog = new Progress()
+        var prog = new Progress
         {
-            Text =
-            {
-                Text = "Searching...",
-            },
-            ProgressBar =
-            {
-                ShowProgressText = true,
-            },
+            Text = { Text = "Searching...", },
+            ProgressBar = { ShowProgressText = true, },
         };
         prog.Show(this);
         var sel = ComboBox.SelectedIndex;
@@ -73,6 +67,7 @@ public partial class Search : Window
             {
                 var sw = Stopwatch.StartNew();
                 var done = 0;
+                var sc = ignoreCasing ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture;
                 foreach (var p in MWindow.Pcks)
                 {
                     foreach (var v in p.FileSystem.Values)
@@ -81,18 +76,15 @@ public partial class Search : Window
                         switch (sel)
                         {
                             case 0:
-                                if (($"{v.PckName}/{v.Path}").Contains(search,
-                                        ignoreCasing ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture))
+                                if ($"{v.PckName}/{v.Path}".Contains(search, sc))
                                     match = true;
                                 break;
                             case 1:
-                                if (v.Path != null && v.Path.Contains(search,
-                                        ignoreCasing ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture))
+                                if (v.Path != null && v.Path.Contains(search, sc))
                                     match = true;
                                 break;
                             case 2:
-                                if (v.SongHash != null && v.SongHash.Contains(search,
-                                        ignoreCasing ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture))
+                                if (v.SongHash != null && v.SongHash.Contains(search, sc))
                                     match = true;
                                 break;
                         }

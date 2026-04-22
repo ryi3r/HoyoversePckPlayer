@@ -4,6 +4,8 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
+using System.Threading;
 using Encoding = System.Text.Encoding;
 
 namespace HoyoversePckPlayer;
@@ -29,6 +31,35 @@ public class Wwise(string fullPath)
     public string? GetPossibleName()
     {
         return null; // todo, use SongHash?
+    }
+
+    public void UpdateSongDuration(Lock @lock, VgmStreamWasm vgm)
+    {
+        if (Duration != -1)
+            return;
+        var targetFilename = $"/{System.IO.Path.GetRandomFileName()}.{Extension.ToString().ToLower()}";
+        string json;
+        lock (@lock)
+        {
+            vgm.Fs.InsertResource(targetFilename, GetRaw());
+            var lastIgnore = vgm.Fs.IgnoreInternalPipes;
+            vgm.Fs.IgnoreInternalPipes = false;
+            vgm.CallMain("-I", "-m", targetFilename);
+            vgm.Fs.IgnoreInternalPipes = lastIgnore;
+            vgm.Fs.RemoveResource(targetFilename);
+            json = Encoding.UTF8.GetString(vgm.FlushStdout());
+            vgm.FlushStderr();
+        }
+        try
+        {
+            var metadata = JsonSerializer.Deserialize<JsonElement>(json, JsonSerializerOptions.Default);
+            Duration = (double)metadata.GetProperty("numberOfSamples").GetInt32() / metadata.GetProperty("sampleRate").GetInt32();
+        }
+        catch
+        {
+            Duration = 0;
+        }
+        //Console.WriteLine($"finished: {SelectedItem.Name}");
     }
 
     public byte[] GetRaw()
