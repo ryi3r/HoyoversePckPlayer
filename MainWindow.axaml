@@ -1,30 +1,24 @@
-<Window xmlns="https://github.com/avaloniaui"
-           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-           mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-           x:Class="HoyoversePckPlayer.MainWindow"
-           Title="HoyoversePckPlayer">
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" x:Class="HoyoversePckPlayer.MainWindow" Title="HoyoversePckPlayer">
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Data">
-                <MenuItem Header="Load Folder" Click="LoadFolder_OnClick"/>
-                <MenuItem Header="Load File" Click="LoadFile_OnClick"/>
-                <Separator/>
-                <MenuItem Header="Clear Data" Click="ClearData_OnClick"/>
+                <MenuItem Header="Load Folder" Click="LoadFolder_OnClick" />
+                <MenuItem Header="Load File" Click="LoadFile_OnClick" />
+                <Separator />
+                <MenuItem Header="Clear Data" Click="ClearData_OnClick" />
             </MenuItem>
-            <MenuItem Click="ExportAll_OnClick" Header="Export All"/>
-            <MenuItem Click="Search_OnClick" Header="Search"/>
+            <MenuItem Click="ExportAll_OnClick" Header="Export All" />
+            <MenuItem Click="Search_OnClick" Header="Search" />
         </Menu>
         <Grid ColumnDefinitions="300, 4, *">
-            <TreeView Name="SongTree" SelectionChanged="SongTree_OnSelectionChanged"/>
-            <GridSplitter Grid.Column="1"/>
+            <TreeView Name="SongTree" SelectionChanged="SongTree_OnSelectionChanged" />
+            <GridSplitter Grid.Column="1" />
             <DockPanel Grid.Column="2">
                 <StackPanel DockPanel.Dock="Top" Orientation="Vertical" Margin="10">
                     <TextBlock HorizontalAlignment="Center" Name="SongName">Sample Song</TextBlock>
                     <Grid ColumnDefinitions="1*, 10*, 1*">
                         <TextBlock Grid.Column="0" HorizontalAlignment="Center" Name="SongCurrentDuration">--:--</TextBlock>
-                        <Slider Grid.Column="1" Margin="12 0" Name="SongSlider" ValueChanged="SongSlider_OnValueChanged" Minimum="0" Maximum="1"/>
+                        <Slider Grid.Column="1" Margin="12 0" Name="SongSlider" ValueChanged="SongSlider_OnValueChanged" Minimum="0" Maximum="1" />
                         <TextBlock Grid.Column="2" HorizontalAlignment="Center" Name="SongTotalDuration">--:--</TextBlock>
                     </Grid>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" Margin="0 6 0 0">
