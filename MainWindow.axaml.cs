@@ -693,21 +693,16 @@ public partial class MainWindow : Window
             return;
         var file = await StorageProvider.SaveFilePickerAsync(new()
         {
+            SuggestedFileName = $"{SelectedItem.Name ?? "unknown"}.wav",
             DefaultExtension = ".wav",
-            FileTypeChoices = [new(SelectedItem.IsWem ? "*.wem" : "*.bnk"), new("*.wav"), new("*.ogg")],
+            FileTypeChoices = [new("WAV File") { Patterns = ["*.wav"] }, new("OGG File") { Patterns = ["*.ogg"] }, new("Raw File") { Patterns = [SelectedItem.IsWem ? "*.wem" : "*.bnk"] }],
         });
         if (file == null)
             return;
         var prog = new Progress
         {
-            Text =
-            {
-                Text = "Exporting file...",
-            },
-            ProgressBar =
-            {
-                IsIndeterminate = true,
-            },
+            Text = { Text = "Exporting file...", },
+            ProgressBar = { IsIndeterminate = true, },
         };
         prog.Show(this);
         var task = Task.Run(async () =>
@@ -740,20 +735,14 @@ public partial class MainWindow : Window
         var file = await StorageProvider.SaveFilePickerAsync(new()
         {
             DefaultExtension = ".wav",
-            FileTypeChoices = [new("*.raw"), new("*.wav"), new("*.ogg")],
+            FileTypeChoices = [new("WAV File") { Patterns = ["*.wav"] }, new("OGG File") { Patterns = ["*.ogg"] }, new("Raw File") { Patterns = ["*.raw"] }],
         });
         if (file == null)
             return;
         var prog = new Progress
         {
-            Text =
-            {
-                Text = "Exporting all files...",
-            },
-            ProgressBar =
-            {
-                IsIndeterminate = true,
-            },
+            Text = { Text = "Exporting all files...", },
+            ProgressBar = { IsIndeterminate = true, },
         };
         prog.Show(this);
         var task = Task.Run(async () =>
